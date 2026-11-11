@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Plus, X, GripVertical } from "lucide-react";
 import { Question, QuestionConfig } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,18 @@ export const BuilderRightPanel: React.FC<BuilderRightPanelProps> = ({
         </span>
       </div>
       <div className="p-4 space-y-5">
+        <SettingRow label="Description" vertical>
+          <textarea
+            value={question.description ?? ""}
+            onChange={(event) =>
+              onUpdateQuestion({ description: event.target.value })
+            }
+            placeholder="Add a description (optional)"
+            rows={3}
+            className="w-full resize-y border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 transition-colors"
+          />
+        </SettingRow>
+
         {/* Required Toggle */}
         <SettingRow label="Required">
           <Toggle
@@ -67,6 +79,7 @@ const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void }> = ({
   onChange,
 }) => (
   <button
+    type="button"
     onClick={() => onChange(!value)}
     className={cn(
       "relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 transition-colors focus:outline-none",
@@ -160,6 +173,7 @@ const TypeSpecificSettings: React.FC<{
             {[3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
               <button
                 key={n}
+                type="button"
                 onClick={() => patchConfig({ rating_scale: n })}
                 className={cn(
                   "w-8 h-8 rounded-lg text-sm font-semibold border transition-all",
@@ -242,6 +256,7 @@ const ChoicesEditor: React.FC<{
                 className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 transition-colors min-w-0"
               />
               <button
+                type="button"
                 onClick={() => removeOption(idx)}
                 className="p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
               >
@@ -251,6 +266,7 @@ const ChoicesEditor: React.FC<{
           ))}
         </div>
         <button
+          type="button"
           onClick={addOption}
           className="mt-2 inline-flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-800 font-medium transition-colors"
         >

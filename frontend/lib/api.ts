@@ -6,6 +6,7 @@ import {
   FormUpdatePayload,
   PublicForm,
   Question,
+  QuestionConfig,
   ResponseDetail,
   ResponseSubmitPayload,
 } from "./types";
@@ -16,7 +17,7 @@ export interface QuestionCreatePayload {
   description?: string | null;
   required?: boolean;
   position?: number;
-  config?: Record<string, any>;
+  config?: QuestionConfig;
 }
 
 export interface QuestionUpdatePayload {
@@ -25,7 +26,7 @@ export interface QuestionUpdatePayload {
   description?: string | null;
   required?: boolean;
   position?: number;
-  config?: Record<string, any>;
+  config?: QuestionConfig;
 }
 
 export interface ReorderPayload {

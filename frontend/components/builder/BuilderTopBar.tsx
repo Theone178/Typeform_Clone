@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Eye,
   Globe,
-  Save,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
@@ -21,7 +18,6 @@ interface BuilderTopBarProps {
   activeTab: BuilderTab;
   onTabChange: (tab: BuilderTab) => void;
   saveStatus: "idle" | "saving" | "saved" | "error";
-  onPreview: () => void;
   onPublish: () => void;
   onTitleChange: (title: string) => void;
 }
@@ -31,7 +27,6 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   activeTab,
   onTabChange,
   saveStatus,
-  onPreview,
   onPublish,
   onTitleChange,
 }) => {
@@ -150,14 +145,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </span>
 
         <button
-          onClick={onPreview}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 border border-gray-200 transition-all"
-        >
-          <Eye className="w-3.5 h-3.5" />
-          Preview
-        </button>
-
-        <button
+          type="button"
           onClick={onPublish}
           className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-all shadow-sm"
         >
