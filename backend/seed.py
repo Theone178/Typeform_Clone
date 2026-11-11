@@ -10,12 +10,12 @@ for p in (_cur_dir, _root_dir):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-try:
+if __package__ == "backend":
+    from .app.database import Base, SessionLocal, engine, init_db
+    from .app.models import Answer, Form, Question, Response
+else:
     from app.database import Base, SessionLocal, engine, init_db
     from app.models import Answer, Form, Question, Response
-except ImportError:
-    from backend.app.database import Base, SessionLocal, engine, init_db
-    from backend.app.models import Answer, Form, Question, Response
 
 
 def run_seed():

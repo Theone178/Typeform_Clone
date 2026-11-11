@@ -34,10 +34,11 @@ pnpm install
 ```
 
 ### 3. Environment Configuration
-The API endpoint defaults to `http://127.0.0.1:8000`. You can configure it in `.env.local`:
+Set the API endpoint in `.env.local` for local development and in the frontend deployment environment:
 ```env
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ```
+For deployment, set `NEXT_PUBLIC_API_URL` to the public backend base URL before building the frontend. Leave it empty only when the backend is served through the same origin.
 
 ### 4. Run Development Server
 ```bash

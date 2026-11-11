@@ -11,19 +11,33 @@ for _path in (_backend_dir, _root_dir):
         sys.path.insert(0, _path)
 
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .database import init_db
+if __package__ == "backend.app":
+    from ..seed import run_seed
+else:
+    from seed import run_seed
+from .database import SessionLocal, init_db
+from .models import Form
 from .routers import forms, public, questions, results
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Initialize database tables
+async def lifespan(_: FastAPI):
     init_db()
+    with SessionLocal() as db:
+        if db.query(Form.id).first() is None:
+            run_seed()
     yield
 
+
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
 
 app = FastAPI(
     title="Typeform Clone API",
@@ -35,7 +49,7 @@ app = FastAPI(
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -31,7 +31,7 @@ export default function FormRespondentPage() {
         });
       } else {
         setError({
-          message: `Unable to connect to the backend server at ${API_BASE_URL}. Please ensure the FastAPI backend is running.`,
+          message: `Unable to connect to the configured backend server (${API_BASE_URL || "same origin"}). Please ensure the FastAPI backend is running.`,
         });
       }
     } finally {

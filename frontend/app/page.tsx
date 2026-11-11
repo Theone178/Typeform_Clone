@@ -257,7 +257,7 @@ export default function CreatorDashboardPage() {
                 <div className="space-y-1">
                   <h3 className="font-bold text-gray-900">Could not connect to backend</h3>
                   <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto">
-                    {(error as ApiError)?.message || "Please ensure the FastAPI server is running on http://127.0.0.1:8000"}
+                    {(error as ApiError)?.message || "Please check that the configured API server is running."}
                   </p>
                 </div>
                 <button

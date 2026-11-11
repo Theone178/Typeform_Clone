@@ -22,6 +22,13 @@ A production-ready FastAPI backend for the Typeform Clone, built with SQLAlchemy
 
 ## Getting Started
 
+### Deployment Environment
+
+- `DATABASE_URL` (optional): SQLAlchemy database URL. Defaults to `sqlite:///./typeform.db`.
+- `CORS_ORIGINS` (optional): Comma-separated list of allowed browser origins. Defaults to `http://localhost:3000`.
+
+The application creates missing tables on startup and seeds the sample forms only when the forms table is empty. The seed script is also available for manual development use.
+
 ### 1. Prerequisites
 - Python 3.10+ (tested on Python 3.12)
 
