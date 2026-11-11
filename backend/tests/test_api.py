@@ -376,3 +376,76 @@ def test_server_side_validation_and_submission(client):
     assert stats["total_responses"] == 1
     assert stats["completion_rate"] == 100.0
     assert len(stats["questions_stats"]) == 5
+
+
+def test_normalized_question_types(client):
+    create_res = client.post(
+        "/forms",
+        json={
+            "title": "Normalized Types Form",
+            "slug": "normalized-form",
+            "questions": [
+                {
+                    "type": "short_text",
+                    "title": "Short text title",
+                    "required": True,
+                    "config": {"max_length": 20},
+                },
+                {
+                    "type": "long_text",
+                    "title": "Long text title",
+                    "required": False,
+                },
+                {
+                    "type": "yes_no",
+                    "title": "Are you satisfied?",
+                    "required": True,
+                },
+            ],
+        },
+    )
+    assert create_res.status_code == 201
+    form_id = create_res.json()["id"]
+    slug = create_res.json()["slug"]
+    client.post(f"/forms/{form_id}/publish")
+
+    q_short, q_long, q_yn = create_res.json()["questions"]
+
+    # Invalid yes_no value
+    bad_yn = client.post(
+        f"/public/forms/{slug}/responses",
+        json={
+            "answers": [
+                {"question_id": q_short["id"], "value": "A valid string"},
+                {"question_id": q_yn["id"], "value": "maybe"},
+            ]
+        },
+    )
+    assert bad_yn.status_code == 422
+    assert "Value must be 'yes' or 'no'" in str(bad_yn.json())
+
+    # Valid submission
+    ok_res = client.post(
+        f"/public/forms/{slug}/responses",
+        json={
+            "answers": [
+                {"question_id": q_short["id"], "value": "All good"},
+                {"question_id": q_long["id"], "value": "Some very detailed explanation here."},
+                {"question_id": q_yn["id"], "value": "yes"},
+            ]
+        },
+    )
+    assert ok_res.status_code == 201
+    answers = ok_res.json()["answers"]
+    assert len(answers) == 3
+
+    stats_res = client.get(f"/forms/{form_id}/stats")
+    assert stats_res.status_code == 200
+    yes_no_stats = next(
+        stats for stats in stats_res.json()["questions_stats"]
+        if stats["question_id"] == q_yn["id"]
+    )
+    assert yes_no_stats["data"]["options_breakdown"] == [
+        {"option": "yes", "count": 1, "percentage": 100.0},
+        {"option": "no", "count": 0, "percentage": 0.0},
+    ]

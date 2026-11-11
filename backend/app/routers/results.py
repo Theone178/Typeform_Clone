@@ -94,7 +94,7 @@ def get_form_stats(id: str, db: Session = Depends(get_db)):
 
         data: Dict[str, Any] = {}
 
-        if q_type == "dropdown" or (q_type == "multiple_choice" and not config.get("allow_multiple", True)):
+        if q_type in ("dropdown", "choice") or (q_type == "multiple_choice" and not config.get("allow_multiple", True)):
             options = extract_option_values(config.get("options", []))
             counts: Dict[str, int] = {opt: 0 for opt in options}
             for v in values:
@@ -155,7 +155,7 @@ def get_form_stats(id: str, db: Session = Depends(get_db)):
             else:
                 data = {"count": 0, "average": None, "min": None, "max": None}
 
-        elif q_type in ("short_text", "long_text", "email", "yes_no"):
+        elif q_type in ("short_text", "long_text", "email"):
             # Provide sample recent responses
             data = {
                 "count": total_answers,

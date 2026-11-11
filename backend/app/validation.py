@@ -157,8 +157,8 @@ def validate_answers(questions: List[Question], answers_input: List[Dict[str, An
         # 6. Multiple Choice validation
         # allow_multiple=True  → multi-select (array)
         # allow_multiple=False → single-select (string)
-        elif q_type == "multiple_choice":
-            allow_multiple = config.get("allow_multiple", True)
+        elif q_type in ("multiple_choice", "choice"):
+            allow_multiple = config.get("allow_multiple", False if q_type == "choice" else True)
 
             if allow_multiple:
                 if not isinstance(raw_value, list):
