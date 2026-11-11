@@ -7,6 +7,7 @@ import { extractOptionStrings, QUESTION_TYPES } from "@/lib/questionTypes";
 import { ChoiceInput } from "./inputs/ChoiceInput";
 import { MultipleChoiceInput } from "./inputs/MultipleChoiceInput";
 import { RatingInput } from "./inputs/RatingInput";
+import { YesNoInput } from "./inputs/YesNoInput";
 
 interface QuestionRendererProps {
   question: Question;
@@ -31,7 +32,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   textColor = "#191919",
   readOnly = false,
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   // Auto-focus input on question display
   useEffect(() => {
@@ -40,8 +41,10 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     }
   }, [question.id, readOnly]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    if (e.key === "Enter" && question.type !== QUESTION_TYPES.LONG_TEXT) {
       e.preventDefault();
       onNext();
     }
@@ -52,11 +55,11 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     const config = question.config || {};
 
     switch (qType) {
-      case QUESTION_TYPES.TEXT:
+      case QUESTION_TYPES.SHORT_TEXT:
         return (
           <div className="w-full max-w-xl">
             <input
-              ref={inputRef}
+              ref={inputRef as React.RefObject<HTMLInputElement>}
               type="text"
               value={value ?? ""}
               onChange={(e) => onChange(e.target.value)}
@@ -73,11 +76,32 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           </div>
         );
 
+      case QUESTION_TYPES.LONG_TEXT:
+        return (
+          <div className="w-full max-w-xl">
+            <textarea
+              ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+              value={value ?? ""}
+              onChange={(e) => onChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={readOnly}
+              placeholder={config.placeholder || "Type your answer here..."}
+              maxLength={config.max_length}
+              rows={4}
+              className="w-full bg-transparent border-b-2 py-3 text-2xl sm:text-3xl font-light placeholder:opacity-30 focus:outline-none transition-colors resize-none"
+              style={{
+                borderColor: error ? "#ef4444" : "rgba(150, 150, 150, 0.3)",
+                color: textColor,
+              }}
+            />
+          </div>
+        );
+
       case QUESTION_TYPES.EMAIL:
         return (
           <div className="w-full max-w-xl">
             <input
-              ref={inputRef}
+              ref={inputRef as React.RefObject<HTMLInputElement>}
               type="email"
               value={value ?? ""}
               onChange={(e) => onChange(e.target.value)}
@@ -97,12 +121,14 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         return (
           <div className="w-full max-w-xs">
             <input
-              ref={inputRef}
+              ref={inputRef as React.RefObject<HTMLInputElement>}
               type="number"
               value={value ?? ""}
               min={config.min}
               max={config.max}
-              onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}
+              onChange={(e) =>
+                onChange(e.target.value === "" ? "" : Number(e.target.value))
+              }
               onKeyDown={handleKeyDown}
               disabled={readOnly}
               placeholder={config.placeholder || "0"}
@@ -120,10 +146,9 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           </div>
         );
 
-      case QUESTION_TYPES.CHOICE:
+      case QUESTION_TYPES.YES_NO:
         return (
-          <ChoiceInput
-            options={config.options}
+          <YesNoInput
             value={value}
             onChange={onChange}
             onAutoAdvance={onNext}
@@ -134,16 +159,30 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         );
 
       case QUESTION_TYPES.MULTIPLE_CHOICE:
-        return (
-          <MultipleChoiceInput
-            options={config.options}
-            value={value}
-            onChange={onChange}
-            primaryColor={primaryColor}
-            textColor={textColor}
-            readOnly={readOnly}
-          />
-        );
+        if (config.allow_multiple) {
+          return (
+            <MultipleChoiceInput
+              options={config.options}
+              value={value}
+              onChange={onChange}
+              primaryColor={primaryColor}
+              textColor={textColor}
+              readOnly={readOnly}
+            />
+          );
+        } else {
+          return (
+            <ChoiceInput
+              options={config.options}
+              value={value}
+              onChange={onChange}
+              onAutoAdvance={onNext}
+              primaryColor={primaryColor}
+              textColor={textColor}
+              readOnly={readOnly}
+            />
+          );
+        }
 
       case QUESTION_TYPES.RATING:
         return (
@@ -192,6 +231,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
               onKeyDown={handleKeyDown}
               disabled={readOnly}
               className="w-full bg-transparent border-b-2 py-3 text-2xl"
+              style={{ color: textColor }}
             />
           </div>
         );
@@ -243,22 +283,27 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       )}
 
       {/* OK / Next Button with Enter shortcut */}
-      <div className="flex items-center gap-3 mt-2">
-        <button
-          type="button"
-          onClick={onNext}
-          disabled={readOnly}
-          className="group inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-white shadow-md hover:opacity-95 active:scale-95 transition-all text-base"
-          style={{ backgroundColor: primaryColor }}
-        >
-          <span>OK</span>
-          <Check className="w-4 h-4" />
-        </button>
+      {question.type !== QUESTION_TYPES.YES_NO && (
+        <div className="flex items-center gap-3 mt-2">
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={readOnly}
+            className="group inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-white shadow-md hover:opacity-95 active:scale-95 transition-all text-base"
+            style={{ backgroundColor: primaryColor }}
+          >
+            <span>OK</span>
+            <Check className="w-4 h-4" />
+          </button>
 
-        <span className="text-xs uppercase tracking-wider font-semibold opacity-50 flex items-center gap-1 select-none">
-          press <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono text-[11px]">Enter ↵</kbd>
-        </span>
-      </div>
+          <span className="text-xs uppercase tracking-wider font-semibold opacity-50 flex items-center gap-1 select-none">
+            press{" "}
+            <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono text-[11px]">
+              Enter ↵
+            </kbd>
+          </span>
+        </div>
+      )}
     </div>
   );
 };

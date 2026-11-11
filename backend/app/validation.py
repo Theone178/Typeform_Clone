@@ -40,6 +40,11 @@ def validate_answers(questions: List[Question], answers_input: List[Dict[str, An
     Validates answers submitted against form questions.
     Returns cleaned dict of {question_id: validated_value}.
     Raises HTTPException(422) if validation fails with detailed error list.
+
+    Supported question types (normalized):
+      short_text, long_text, email, number, yes_no,
+      multiple_choice (allow_multiple drives single vs multi select),
+      dropdown, rating
     """
     answers_by_qid = {ans.get("question_id"): ans.get("value") for ans in answers_input if "question_id" in ans}
     questions_by_id = {q.id: q for q in questions}
@@ -74,14 +79,13 @@ def validate_answers(questions: List[Question], answers_input: List[Dict[str, An
             # Not required and no value provided
             continue
 
-        q_type = (q.type or "text").lower()
+        q_type = (q.type or "short_text").lower()
         validated_val = raw_value
 
         # 2. Email validation
         if q_type == "email":
             val_str = str(raw_value).strip()
             try:
-                # check_deliverability=False for fast offline/local validation
                 valid = validate_email(val_str, check_deliverability=False)
                 validated_val = valid.normalized
             except EmailNotValidError as e:
@@ -125,8 +129,21 @@ def validate_answers(questions: List[Question], answers_input: List[Dict[str, An
                     })
                 validated_val = num_val
 
-        # 4. Choice / Dropdown validation
-        elif q_type in ("choice", "dropdown"):
+        # 4. Yes/No validation
+        elif q_type == "yes_no":
+            val_str = str(raw_value).strip().lower()
+            if val_str not in ("yes", "no", "true", "false", "1", "0"):
+                errors.append({
+                    "question_id": q.id,
+                    "field": q.title,
+                    "error": f"Value must be 'yes' or 'no'."
+                })
+            else:
+                # Normalize to yes/no
+                validated_val = "yes" if val_str in ("yes", "true", "1") else "no"
+
+        # 5. Dropdown validation (always single-select)
+        elif q_type == "dropdown":
             allowed_options = extract_option_values(config.get("options", []))
             str_val = str(raw_value)
             if allowed_options and str_val not in allowed_options:
@@ -137,25 +154,41 @@ def validate_answers(questions: List[Question], answers_input: List[Dict[str, An
                 })
             validated_val = str_val
 
-        # 5. Multiple Choice validation
+        # 6. Multiple Choice validation
+        # allow_multiple=True  → multi-select (array)
+        # allow_multiple=False → single-select (string)
         elif q_type == "multiple_choice":
-            if not isinstance(raw_value, list):
-                selected_items = [str(raw_value)]
-            else:
-                selected_items = [str(item) for item in raw_value]
+            allow_multiple = config.get("allow_multiple", True)
 
-            allowed_options = extract_option_values(config.get("options", []))
-            if allowed_options:
-                invalid_choices = [item for item in selected_items if item not in allowed_options]
-                if invalid_choices:
+            if allow_multiple:
+                if not isinstance(raw_value, list):
+                    selected_items = [str(raw_value)]
+                else:
+                    selected_items = [str(item) for item in raw_value]
+
+                allowed_options = extract_option_values(config.get("options", []))
+                if allowed_options:
+                    invalid_choices = [item for item in selected_items if item not in allowed_options]
+                    if invalid_choices:
+                        errors.append({
+                            "question_id": q.id,
+                            "field": q.title,
+                            "error": f"Selected options {invalid_choices} are not in allowed options: {allowed_options}."
+                        })
+                validated_val = selected_items
+            else:
+                # single-select
+                str_val = str(raw_value)
+                allowed_options = extract_option_values(config.get("options", []))
+                if allowed_options and str_val not in allowed_options:
                     errors.append({
                         "question_id": q.id,
                         "field": q.title,
-                        "error": f"Selected options {invalid_choices} are not in allowed options: {allowed_options}."
+                        "error": f"Selected choice '{str_val}' is not in allowed options: {allowed_options}."
                     })
-            validated_val = selected_items
+                validated_val = str_val
 
-        # 6. Rating validation
+        # 7. Rating validation
         elif q_type == "rating":
             rating_scale = config.get("rating_scale") or config.get("max") or 5
             try:
@@ -174,8 +207,8 @@ def validate_answers(questions: List[Question], answers_input: List[Dict[str, An
                     "error": f"Rating must be an integer between 1 and {rating_scale}."
                 })
 
-        # 7. Text validation
-        elif q_type == "text":
+        # 8. Text types (short_text, long_text) and legacy fallback
+        else:
             max_len = config.get("max_length")
             str_val = str(raw_value)
             if max_len is not None and len(str_val) > max_len:

@@ -183,3 +183,41 @@ def reorder_questions(
         .all()
     )
     return reordered
+
+
+@router.post("/{question_id}/duplicate", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)
+def duplicate_question(id: str, question_id: str, db: Session = Depends(get_db)):
+    get_form_or_404(db, id)
+    question = (
+        db.query(Question)
+        .filter(Question.form_id == id, Question.id == question_id)
+        .first()
+    )
+    if not question:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Question with id '{question_id}' not found in form '{id}'",
+        )
+
+    # Shift positions of all questions after the original
+    questions_after = (
+        db.query(Question)
+        .filter(Question.form_id == id, Question.position > question.position)
+        .all()
+    )
+    for q in questions_after:
+        q.position += 1
+
+    new_question = Question(
+        form_id=id,
+        type=question.type,
+        title=f"{question.title} (copy)",
+        description=question.description,
+        required=question.required,
+        position=question.position + 1,
+        config=question.config,
+    )
+    db.add(new_question)
+    db.commit()
+    db.refresh(new_question)
+    return new_question

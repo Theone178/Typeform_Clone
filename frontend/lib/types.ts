@@ -1,8 +1,9 @@
 export type QuestionType =
-  | "text"
+  | "short_text"
+  | "long_text"
   | "email"
   | "number"
-  | "choice"
+  | "yes_no"
   | "multiple_choice"
   | "dropdown"
   | "rating";
@@ -23,6 +24,7 @@ export interface ThankYouConfig {
 
 export interface QuestionConfig {
   options?: (string | { label: string; value: string })[];
+  allow_multiple?: boolean;
   rating_scale?: number;
   min?: number;
   max?: number;

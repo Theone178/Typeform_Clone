@@ -5,9 +5,32 @@ import {
   FormResponse,
   FormUpdatePayload,
   PublicForm,
+  Question,
   ResponseDetail,
   ResponseSubmitPayload,
 } from "./types";
+
+export interface QuestionCreatePayload {
+  type: string;
+  title: string;
+  description?: string | null;
+  required?: boolean;
+  position?: number;
+  config?: Record<string, any>;
+}
+
+export interface QuestionUpdatePayload {
+  type?: string;
+  title?: string;
+  description?: string | null;
+  required?: boolean;
+  position?: number;
+  config?: Record<string, any>;
+}
+
+export interface ReorderPayload {
+  question_ids: string[];
+}
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") || "http://127.0.0.1:8000";
@@ -153,6 +176,60 @@ export const api = {
     return request<any>(`/forms/${id}/stats`, {
       method: "GET",
       cache: "no-store",
+    });
+  },
+
+  // Question CRUD
+  getQuestions: (formId: string): Promise<Question[]> => {
+    return request<Question[]>(`/forms/${formId}/questions`, {
+      method: "GET",
+      cache: "no-store",
+    });
+  },
+
+  createQuestion: (
+    formId: string,
+    payload: QuestionCreatePayload
+  ): Promise<Question> => {
+    return request<Question>(`/forms/${formId}/questions`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  updateQuestion: (
+    formId: string,
+    questionId: string,
+    payload: QuestionUpdatePayload
+  ): Promise<Question> => {
+    return request<Question>(`/forms/${formId}/questions/${questionId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteQuestion: (formId: string, questionId: string): Promise<void> => {
+    return request<void>(`/forms/${formId}/questions/${questionId}`, {
+      method: "DELETE",
+    });
+  },
+
+  reorderQuestions: (
+    formId: string,
+    payload: ReorderPayload
+  ): Promise<Question[]> => {
+    return request<Question[]>(`/forms/${formId}/questions/reorder`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  duplicateQuestion: (
+    formId: string,
+    questionId: string
+  ): Promise<Question> => {
+    return request<Question>(`/forms/${formId}/questions/${questionId}/duplicate`, {
+      method: "POST",
     });
   },
 };

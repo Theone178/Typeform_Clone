@@ -53,10 +53,10 @@ def run_seed():
         db.add(form1)
         db.flush()
 
-        # Questions for Form 1
+        # Questions for Form 1 — using normalized types
         q1_1 = Question(
             form_id=form1.id,
-            type="text",
+            type="short_text",
             title="What is your full name?",
             description="Please enter your first and last name",
             required=True,
@@ -74,12 +74,13 @@ def run_seed():
         )
         q1_3 = Question(
             form_id=form1.id,
-            type="choice",
+            type="multiple_choice",
             title="How often do you use our product?",
             description="Select the option that best reflects your usage",
             required=True,
             position=2,
-            config={"options": ["Daily", "Weekly", "A few times a month", "Rarely"]},
+            # allow_multiple=False → single-select
+            config={"options": ["Daily", "Weekly", "A few times a month", "Rarely"], "allow_multiple": False},
         )
         q1_4 = Question(
             form_id=form1.id,
@@ -97,7 +98,8 @@ def run_seed():
             description="Select all that apply",
             required=False,
             position=4,
-            config={"options": ["Analytics Dashboard", "Form Builder", "Custom Themes", "Export to CSV", "Integrations"]},
+            # allow_multiple=True → multi-select
+            config={"options": ["Analytics Dashboard", "Form Builder", "Custom Themes", "Export to CSV", "Integrations"], "allow_multiple": True},
         )
         q1_6 = Question(
             form_id=form1.id,
@@ -110,12 +112,12 @@ def run_seed():
         )
         q1_7 = Question(
             form_id=form1.id,
-            type="text",
-            title="What is one feature we should build next?",
-            description="Any ideas or pain points you'd like us to solve",
+            type="yes_no",
+            title="Would you like a member of our team to follow up with you?",
+            description="We may reach out within 3 business days",
             required=False,
             position=6,
-            config={"placeholder": "I would love to see..."},
+            config={},
         )
         db.add_all([q1_1, q1_2, q1_3, q1_4, q1_5, q1_6, q1_7])
         db.flush()
@@ -141,7 +143,7 @@ def run_seed():
         db.add(form2)
         db.flush()
 
-        # Questions for Form 2
+        # Questions for Form 2 — using normalized types
         q2_1 = Question(
             form_id=form2.id,
             type="email",
@@ -153,12 +155,12 @@ def run_seed():
         )
         q2_2 = Question(
             form_id=form2.id,
-            type="choice",
+            type="multiple_choice",
             title="What is your primary development role?",
             description="Your day-to-day focus",
             required=True,
             position=1,
-            config={"options": ["Full Stack Developer", "Backend Engineer", "Frontend Specialist", "DevOps / SRE", "Engineering Manager"]},
+            config={"options": ["Full Stack Developer", "Backend Engineer", "Frontend Specialist", "DevOps / SRE", "Engineering Manager"], "allow_multiple": False},
         )
         q2_3 = Question(
             form_id=form2.id,
@@ -167,7 +169,7 @@ def run_seed():
             description="Select all that apply",
             required=True,
             position=2,
-            config={"options": ["FastAPI", "Django", "Node.js / Express", "Go (Gin/Fiber)", "Spring Boot", "Ruby on Rails"]},
+            config={"options": ["FastAPI", "Django", "Node.js / Express", "Go (Gin/Fiber)", "Spring Boot", "Ruby on Rails"], "allow_multiple": True},
         )
         q2_4 = Question(
             form_id=form2.id,
@@ -198,7 +200,7 @@ def run_seed():
         )
         q2_7 = Question(
             form_id=form2.id,
-            type="text",
+            type="long_text",
             title="What developer tool could you not live without?",
             description="IDE, terminal, debugger, AI tool, etc.",
             required=False,
@@ -211,23 +213,23 @@ def run_seed():
         # Seed ~12 responses for Form 1
         print("Seeding responses for Form 1...")
         f1_respondents = [
-            ("Alice Smith", "alice.smith@techcorp.io", "Daily", 5, ["Analytics Dashboard", "Form Builder"], 10, "Dark mode support please!"),
-            ("Bob Jones", "bob.jones@startup.co", "Weekly", 4, ["Form Builder", "Custom Themes"], 8, "Webhooks integration"),
-            ("Charlie Brown", "charlie@designhub.org", "Daily", 5, ["Analytics Dashboard", "Export to CSV"], 9, "Keyboard shortcut customization"),
-            ("Diana Prince", "diana.prince@themyscira.com", "A few times a month", 3, ["Custom Themes"], 7, "More responsive templates"),
-            ("Evan Wright", "evan.wright@agency.net", "Daily", 5, ["Form Builder", "Custom Themes", "Export to CSV"], 10, "Multi-language forms"),
-            ("Fiona Gallagher", "fiona@chicago.edu", "Weekly", 4, ["Analytics Dashboard"], 8, "Zapier app"),
-            ("George Clark", "george@enterprise.com", "Rarely", 2, ["Export to CSV"], 5, "Easier navigation on mobile"),
-            ("Hannah Abbott", "hannah@hufflepuff.org", "Weekly", 4, ["Form Builder", "Analytics Dashboard"], 9, "Slack notifications on new submission"),
-            ("Ian Malcolm", "ian.m@ingen.com", "Daily", 5, ["Analytics Dashboard", "Integrations"], 10, "Real-time live updates"),
-            ("Julia Roberts", "julia@cinema.com", "A few times a month", 3, ["Custom Themes"], 6, "Custom domains for published forms"),
-            ("Kevin Bacon", "kevin@sixdegrees.net", "Weekly", 4, ["Form Builder"], 8, "Conditional branching logic"),
-            ("Laura Croft", "laura@relics.org", "Daily", 5, ["Analytics Dashboard", "Form Builder", "Custom Themes"], 10, "Offline fill mode"),
+            ("Alice Smith", "alice.smith@techcorp.io", "Daily", 5, ["Analytics Dashboard", "Form Builder"], 10, "yes"),
+            ("Bob Jones", "bob.jones@startup.co", "Weekly", 4, ["Form Builder", "Custom Themes"], 8, "no"),
+            ("Charlie Brown", "charlie@designhub.org", "Daily", 5, ["Analytics Dashboard", "Export to CSV"], 9, "yes"),
+            ("Diana Prince", "diana.prince@themyscira.com", "A few times a month", 3, ["Custom Themes"], 7, "no"),
+            ("Evan Wright", "evan.wright@agency.net", "Daily", 5, ["Form Builder", "Custom Themes", "Export to CSV"], 10, "yes"),
+            ("Fiona Gallagher", "fiona@chicago.edu", "Weekly", 4, ["Analytics Dashboard"], 8, "no"),
+            ("George Clark", "george@enterprise.com", "Rarely", 2, ["Export to CSV"], 5, "no"),
+            ("Hannah Abbott", "hannah@hufflepuff.org", "Weekly", 4, ["Form Builder", "Analytics Dashboard"], 9, "yes"),
+            ("Ian Malcolm", "ian.m@ingen.com", "Daily", 5, ["Analytics Dashboard", "Integrations"], 10, "yes"),
+            ("Julia Roberts", "julia@cinema.com", "A few times a month", 3, ["Custom Themes"], 6, "no"),
+            ("Kevin Bacon", "kevin@sixdegrees.net", "Weekly", 4, ["Form Builder"], 8, "yes"),
+            ("Laura Croft", "laura@relics.org", "Daily", 5, ["Analytics Dashboard", "Form Builder", "Custom Themes"], 10, "yes"),
         ]
 
         base_time = datetime.now(timezone.utc) - timedelta(days=7)
         for idx, resp_tuple in enumerate(f1_respondents):
-            name, email, freq, rating, features, nps, feedback = resp_tuple
+            name, email, freq, rating, features, nps, follow_up = resp_tuple
             start_t = base_time + timedelta(hours=idx * 12, minutes=random.randint(5, 30))
             sub_t = start_t + timedelta(seconds=random.randint(45, 180))
 
@@ -246,7 +248,7 @@ def run_seed():
                 Answer(response_id=resp.id, question_id=q1_4.id, value=rating),
                 Answer(response_id=resp.id, question_id=q1_5.id, value=features),
                 Answer(response_id=resp.id, question_id=q1_6.id, value=nps),
-                Answer(response_id=resp.id, question_id=q1_7.id, value=feedback),
+                Answer(response_id=resp.id, question_id=q1_7.id, value=follow_up),
             ]
             db.add_all(answers)
 

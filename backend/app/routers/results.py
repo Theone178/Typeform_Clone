@@ -89,12 +89,12 @@ def get_form_stats(id: str, db: Session = Depends(get_db)):
         answers = db.query(Answer).filter(Answer.question_id == q.id).all()
         values = [a.value for a in answers if a.value is not None]
         total_answers = len(values)
-        q_type = (q.type or "text").lower()
+        q_type = (q.type or "short_text").lower()
         config = q.config or {}
 
         data: Dict[str, Any] = {}
 
-        if q_type in ("choice", "dropdown"):
+        if q_type == "dropdown" or (q_type == "multiple_choice" and not config.get("allow_multiple", True)):
             options = extract_option_values(config.get("options", []))
             counts: Dict[str, int] = {opt: 0 for opt in options}
             for v in values:
@@ -110,7 +110,7 @@ def get_form_stats(id: str, db: Session = Depends(get_db)):
             ]
             data = {"options_breakdown": breakdown}
 
-        elif q_type == "multiple_choice":
+        elif q_type == "multiple_choice" and config.get("allow_multiple", True):
             options = extract_option_values(config.get("options", []))
             counts: Dict[str, int] = {opt: 0 for opt in options}
             for v in values:
@@ -155,12 +155,23 @@ def get_form_stats(id: str, db: Session = Depends(get_db)):
             else:
                 data = {"count": 0, "average": None, "min": None, "max": None}
 
-        elif q_type in ("text", "email"):
+        elif q_type in ("short_text", "long_text", "email", "yes_no"):
             # Provide sample recent responses
             data = {
                 "count": total_answers,
                 "recent_answers": [str(v) for v in values[-10:]],
             }
+
+        elif q_type == "yes_no":
+            counts = {"yes": 0, "no": 0}
+            for v in values:
+                v_str = str(v).lower()
+                if v_str in counts:
+                    counts[v_str] += 1
+            data = {"options_breakdown": [
+                {"option": k, "count": c, "percentage": round(c / total_answers * 100, 1) if total_answers else 0}
+                for k, c in counts.items()
+            ]}
 
         else:
             data = {"count": total_answers}
