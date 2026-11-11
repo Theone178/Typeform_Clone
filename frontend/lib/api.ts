@@ -1,5 +1,9 @@
 import {
   ApiErrorDetail,
+  FormCreatePayload,
+  FormListItem,
+  FormResponse,
+  FormUpdatePayload,
   PublicForm,
   ResponseDetail,
   ResponseSubmitPayload,
@@ -85,11 +89,70 @@ export const api = {
     });
   },
 
-  // Creator Endpoints (Available for builder / dashboard integration)
-  getForms: () => request<any[]>("/forms"),
-  getForm: (id: string) => request<any>(`/forms/${id}`),
-  publishForm: (id: string) => request<any>(`/forms/${id}/publish`, { method: "POST" }),
-  unpublishForm: (id: string) => request<any>(`/forms/${id}/unpublish`, { method: "POST" }),
-  getFormResponses: (id: string) => request<any[]>(`/forms/${id}/responses`),
-  getFormStats: (id: string) => request<any>(`/forms/${id}/stats`),
+  // Creator Endpoints
+  getForms: (): Promise<FormListItem[]> => {
+    return request<FormListItem[]>("/forms", {
+      method: "GET",
+      cache: "no-store",
+    });
+  },
+
+  getForm: (id: string): Promise<FormResponse> => {
+    return request<FormResponse>(`/forms/${id}`, {
+      method: "GET",
+      cache: "no-store",
+    });
+  },
+
+  createForm: (payload: FormCreatePayload): Promise<FormResponse> => {
+    return request<FormResponse>("/forms", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  updateForm: (id: string, payload: FormUpdatePayload): Promise<FormResponse> => {
+    return request<FormResponse>(`/forms/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteForm: (id: string): Promise<void> => {
+    return request<void>(`/forms/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  publishForm: (id: string): Promise<FormResponse> => {
+    return request<FormResponse>(`/forms/${id}/publish`, {
+      method: "POST",
+    });
+  },
+
+  unpublishForm: (id: string): Promise<FormResponse> => {
+    return request<FormResponse>(`/forms/${id}/unpublish`, {
+      method: "POST",
+    });
+  },
+
+  duplicateForm: (id: string): Promise<FormResponse> => {
+    return request<FormResponse>(`/forms/${id}/duplicate`, {
+      method: "POST",
+    });
+  },
+
+  getFormResponses: (id: string): Promise<ResponseDetail[]> => {
+    return request<ResponseDetail[]>(`/forms/${id}/responses`, {
+      method: "GET",
+      cache: "no-store",
+    });
+  },
+
+  getFormStats: (id: string): Promise<any> => {
+    return request<any>(`/forms/${id}/stats`, {
+      method: "GET",
+      cache: "no-store",
+    });
+  },
 };

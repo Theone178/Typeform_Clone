@@ -53,6 +53,47 @@ export interface PublicForm {
   questions: Question[];
 }
 
+export interface FormListItem {
+  id: string;
+  title: string;
+  status: "draft" | "published";
+  slug: string;
+  theme: ThemeConfig;
+  thank_you: ThankYouConfig;
+  created_at: string;
+  updated_at: string;
+  question_count: number;
+  response_count: number;
+}
+
+export interface FormResponse {
+  id: string;
+  title: string;
+  status: "draft" | "published";
+  slug: string;
+  theme: ThemeConfig;
+  thank_you: ThankYouConfig;
+  created_at: string;
+  updated_at: string;
+  questions?: Question[];
+  response_count?: number;
+}
+
+export interface FormCreatePayload {
+  title: string;
+  slug?: string;
+  theme?: ThemeConfig;
+  thank_you?: ThankYouConfig;
+}
+
+export interface FormUpdatePayload {
+  title?: string;
+  slug?: string;
+  status?: "draft" | "published";
+  theme?: ThemeConfig;
+  thank_you?: ThankYouConfig;
+}
+
 export interface AnswerInput {
   question_id: string;
   value: any;
