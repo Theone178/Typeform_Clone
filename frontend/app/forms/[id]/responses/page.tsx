@@ -1,10 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, BarChart3, Clock3, FileText, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  Clock3,
+  Download,
+  FileText,
+  Loader2,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { AnswerResponse } from "@/lib/types";
 
@@ -24,6 +32,7 @@ function formatDuration(seconds?: number | null): string {
 
 export default function FormResponsesPage() {
   const { id } = useParams<{ id: string }>();
+  const [isExporting, setIsExporting] = useState(false);
   const formQuery = useQuery({
     queryKey: ["form", id],
     queryFn: () => api.getForm(id),
@@ -74,6 +83,31 @@ export default function FormResponsesPage() {
   const stats = statsQuery.data;
   const questions = [...(form.questions ?? [])].sort((a, b) => a.position - b.position);
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const csv = await api.exportFormResponsesCsv(id);
+      const url = URL.createObjectURL(csv);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `form-${id}-responses.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Responses exported");
+    } catch (exportError) {
+      toast.error("Could not export responses", {
+        description:
+          exportError instanceof Error
+            ? exportError.message
+            : "Please try again.",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#fbfbfb] px-4 py-6 text-gray-900 sm:px-8 sm:py-10">
       <div className="mx-auto max-w-6xl space-y-8">
@@ -93,12 +127,27 @@ export default function FormResponsesPage() {
               Submissions and question summaries for this form.
             </p>
           </div>
-          <Link
-            href="/"
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-          >
-            Workspace
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isExporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              {isExporting ? "Exporting..." : "Export CSV"}
+            </button>
+            <Link
+              href="/"
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            >
+              Workspace
+            </Link>
+          </div>
         </header>
 
         <section className="grid gap-4 sm:grid-cols-3">

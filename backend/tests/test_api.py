@@ -1,3 +1,5 @@
+import csv
+import io
 import os
 import sys
 
@@ -385,6 +387,55 @@ def test_server_side_validation_and_submission(client):
     assert stats["total_responses"] == 1
     assert stats["completion_rate"] == 100.0
     assert len(stats["questions_stats"]) == 5
+
+
+def test_export_responses_as_csv(client):
+    create_res = client.post(
+        "/forms",
+        json={
+            "title": "CSV Export Form",
+            "slug": "csv-export-form",
+            "questions": [
+                {"type": "short_text", "title": "Favorite item", "required": False},
+                {"type": "multiple_choice", "title": "Selected items", "required": False},
+            ],
+        },
+    )
+    assert create_res.status_code == 201
+    form_id = create_res.json()["id"]
+    question_ids = [question["id"] for question in create_res.json()["questions"]]
+
+    publish_res = client.post(f"/forms/{form_id}/publish")
+    assert publish_res.status_code == 200
+    submit_res = client.post(
+        "/public/forms/csv-export-form/responses",
+        json={
+            "answers": [
+                {"question_id": question_ids[0], "value": "=1+1"},
+                {"question_id": question_ids[1], "value": ["One", "Two"]},
+            ]
+        },
+    )
+    assert submit_res.status_code == 201
+
+    export_res = client.get(f"/forms/{form_id}/responses/export.csv")
+    assert export_res.status_code == 200
+    assert export_res.headers["content-type"].startswith("text/csv")
+    assert "attachment;" in export_res.headers["content-disposition"]
+    rows = list(csv.reader(io.StringIO(export_res.text)))
+    assert rows[0] == [
+        "Response ID",
+        "Started at",
+        "Submitted at",
+        "Duration (seconds)",
+        "Favorite item",
+        "Selected items",
+    ]
+    assert rows[1][0] == submit_res.json()["id"]
+    assert rows[1][4:] == ["'=1+1", "One, Two"]
+
+    missing_form_res = client.get("/forms/not-a-form/responses/export.csv")
+    assert missing_form_res.status_code == 404
 
 
 def test_normalized_question_types(client):

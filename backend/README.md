@@ -114,5 +114,6 @@ pytest backend/tests/test_api.py -v
 | Method | Endpoint | Description |
 | --- | --- | --- |
 | `GET` | `/forms/{id}/responses` | List all submitted responses with answer values & duration |
+| `GET` | `/forms/{id}/responses/export.csv` | Download all form responses as a CSV file |
 | `GET` | `/forms/{id}/responses/{response_id}` | Get one submitted response and its answers |
 | `GET` | `/forms/{id}/stats` | Aggregate analytics (completion rate, option breakdowns, averages) |

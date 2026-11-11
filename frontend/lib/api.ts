@@ -174,6 +174,28 @@ export const api = {
     });
   },
 
+  exportFormResponsesCsv: async (formId: string): Promise<Blob> => {
+    const response = await fetch(
+      `${API_BASE_URL}/forms/${encodeURIComponent(formId)}/responses/export.csv`,
+      { method: "GET", cache: "no-store" }
+    );
+    if (!response.ok) {
+      let errorMessage = `Request failed with status ${response.status}`;
+      try {
+        const data = await response.json();
+        if (typeof data.detail === "string") {
+          errorMessage = data.detail;
+        } else if (data.detail && typeof data.detail.message === "string") {
+          errorMessage = data.detail.message;
+        }
+      } catch {
+        // Keep the generic message when the server does not return JSON.
+      }
+      throw new ApiError(errorMessage, response.status);
+    }
+    return response.blob();
+  },
+
   getFormResponse: (formId: string, responseId: string): Promise<ResponseDetail> => {
     return request<ResponseDetail>(
       `/forms/${encodeURIComponent(formId)}/responses/${encodeURIComponent(responseId)}`,

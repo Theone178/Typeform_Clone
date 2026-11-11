@@ -1,5 +1,14 @@
+import csv
+import io
+import json
 from typing import Any, Dict, List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Response as FastAPIResponse,
+    status,
+)
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -48,6 +57,73 @@ def list_responses(id: str, db: Session = Depends(get_db)):
             )
         )
     return results
+
+
+@router.get("/responses/export.csv")
+def export_responses_csv(id: str, db: Session = Depends(get_db)):
+    form = get_form_or_404(db, id)
+    questions = sorted(form.questions, key=lambda question: question.position)
+    responses = (
+        db.query(Response)
+        .filter(Response.form_id == id)
+        .order_by(Response.submitted_at.desc())
+        .all()
+    )
+
+    def csv_value(value: Any) -> Any:
+        if value is None:
+            return ""
+        if isinstance(value, list):
+            value = ", ".join(str(item) for item in value)
+        elif isinstance(value, dict):
+            value = json.dumps(value, ensure_ascii=False)
+        if isinstance(value, str) and value.lstrip(" \t\r\n\v\f\ufeff").startswith(
+            ("=", "+", "-", "@")
+        ):
+            return f"'{value}"
+        return value
+
+    output = io.StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow(
+        [
+            "Response ID",
+            "Started at",
+            "Submitted at",
+            "Duration (seconds)",
+            *[csv_value(question.title) for question in questions],
+        ]
+    )
+
+    for response in responses:
+        duration = None
+        if response.started_at and response.submitted_at:
+            duration = max(
+                0.0, (response.submitted_at - response.started_at).total_seconds()
+            )
+        answer_by_question = {
+            answer.question_id: answer.value for answer in response.answers
+        }
+        writer.writerow(
+            [
+                response.id,
+                response.started_at.isoformat() if response.started_at else "",
+                response.submitted_at.isoformat() if response.submitted_at else "",
+                duration if duration is not None else "",
+                *[
+                    csv_value(answer_by_question.get(question.id))
+                    for question in questions
+                ],
+            ]
+        )
+
+    return FastAPIResponse(
+        content=output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="form-{form.id}-responses.csv"'
+        },
+    )
 
 
 @router.get("/responses/{response_id}", response_model=ResponseDetail)
