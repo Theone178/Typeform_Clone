@@ -3,6 +3,7 @@ import {
   FormCreatePayload,
   FormListItem,
   FormResponse,
+  FormStats,
   FormUpdatePayload,
   PublicForm,
   Question,
@@ -173,8 +174,18 @@ export const api = {
     });
   },
 
-  getFormStats: (id: string): Promise<any> => {
-    return request<any>(`/forms/${id}/stats`, {
+  getFormResponse: (formId: string, responseId: string): Promise<ResponseDetail> => {
+    return request<ResponseDetail>(
+      `/forms/${encodeURIComponent(formId)}/responses/${encodeURIComponent(responseId)}`,
+      {
+        method: "GET",
+        cache: "no-store",
+      }
+    );
+  },
+
+  getFormStats: (id: string): Promise<FormStats> => {
+    return request<FormStats>(`/forms/${id}/stats`, {
       method: "GET",
       cache: "no-store",
     });

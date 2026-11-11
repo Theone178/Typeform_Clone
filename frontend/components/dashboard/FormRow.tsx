@@ -187,14 +187,18 @@ export const FormRow: React.FC<FormRowProps> = ({
       {/* Middle: Badges & Responses */}
       <div className="flex items-center gap-4 sm:gap-6 flex-shrink-0">
         {/* Responses Count */}
-        <div className="text-right hidden sm:block">
+        <Link
+          href={`/forms/${form.id}/responses`}
+          className="text-right hidden sm:block hover:text-purple-700"
+          aria-label={`View ${form.response_count} responses for ${form.title}`}
+        >
           <span className="text-sm font-semibold text-gray-900">
             {form.response_count}
           </span>
           <span className="text-xs text-gray-400 ml-1">
             {form.response_count === 1 ? "response" : "responses"}
           </span>
-        </div>
+        </Link>
 
         {/* Status Badge */}
         <span

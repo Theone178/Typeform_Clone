@@ -18,6 +18,7 @@ packaging==26.3
 pluggy==1.7.0
 pydantic==2.14.3
 pydantic-core==2.50.4
+psycopg2-binary==2.9.11
 pygments==2.21.0
 pytest==9.2.0
 python-dotenv==1.2.4

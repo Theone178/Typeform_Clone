@@ -122,6 +122,38 @@ export interface ResponseDetail {
   answers: AnswerResponse[];
 }
 
+export interface OptionBreakdown {
+  option: string;
+  count: number;
+  percentage: number;
+}
+
+export interface QuestionStats {
+  question_id: string;
+  title: string;
+  type: QuestionType;
+  position: number;
+  total_answers: number;
+  data: {
+    options_breakdown?: OptionBreakdown[];
+    recent_answers?: string[];
+    average?: number | null;
+    min?: number | null;
+    max?: number | null;
+    distribution?: Record<string, number>;
+    count?: number;
+  };
+}
+
+export interface FormStats {
+  form_id: string;
+  title: string;
+  total_responses: number;
+  completion_rate: number;
+  average_duration_seconds?: number | null;
+  questions_stats: QuestionStats[];
+}
+
 export interface ApiErrorDetail {
   question_id?: string;
   field?: string;

@@ -14,7 +14,7 @@ A production-ready FastAPI backend for the Typeform Clone, built with SQLAlchemy
   - `multiple_choice`: Ensures all selected values are valid configured options.
   - `rating`: Enforces integer rating within scale (e.g. 1 to 5).
 - **Results & Analytics**:
-  - Response listing with question answers, submission timestamps, and duration calculation.
+  - Response listing and individual response details with question answers, submission timestamps, and duration calculation.
   - Aggregated stats (`/forms/{id}/stats`): Total responses, completion rate, per-option breakdown for choices/multiple choice, averages & distribution for ratings/numbers, and recent text responses.
 - **Database Seed Script**: Pre-populated with 2 published forms (`product-feedback` and `developer-experience`) featuring mixed question types and 22 realistic responses.
 
@@ -28,6 +28,8 @@ A production-ready FastAPI backend for the Typeform Clone, built with SQLAlchemy
 - `CORS_ORIGINS` (optional): Comma-separated list of allowed browser origins. Defaults to `http://localhost:3000`.
 
 The application creates missing tables on startup and seeds the sample forms only when the forms table is empty. The seed script is also available for manual development use.
+
+For durable data on Render, configure `DATABASE_URL` to a persistent Render PostgreSQL database. The default SQLite file is suitable for local development; on Render it only survives redeploys when stored on a mounted persistent disk. Submitted responses and answers are committed to the configured database.
 
 ### 1. Prerequisites
 - Python 3.10+ (tested on Python 3.12)
@@ -112,4 +114,5 @@ pytest backend/tests/test_api.py -v
 | Method | Endpoint | Description |
 | --- | --- | --- |
 | `GET` | `/forms/{id}/responses` | List all submitted responses with answer values & duration |
+| `GET` | `/forms/{id}/responses/{response_id}` | Get one submitted response and its answers |
 | `GET` | `/forms/{id}/stats` | Aggregate analytics (completion rate, option breakdowns, averages) |

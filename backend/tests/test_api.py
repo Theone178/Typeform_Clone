@@ -369,6 +369,15 @@ def test_server_side_validation_and_submission(client):
     res_list = client.get(f"/forms/{form_id}/responses")
     assert res_list.status_code == 200
     assert len(res_list.json()) == 1
+    response_id = res_list.json()[0]["id"]
+
+    detail_res = client.get(f"/forms/{form_id}/responses/{response_id}")
+    assert detail_res.status_code == 200
+    assert detail_res.json()["id"] == response_id
+    assert len(detail_res.json()["answers"]) == 5
+
+    missing_response = client.get(f"/forms/{form_id}/responses/not-a-response")
+    assert missing_response.status_code == 404
 
     stats_res = client.get(f"/forms/{form_id}/stats")
     assert stats_res.status_code == 200

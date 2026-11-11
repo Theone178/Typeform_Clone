@@ -50,6 +50,35 @@ def list_responses(id: str, db: Session = Depends(get_db)):
     return results
 
 
+@router.get("/responses/{response_id}", response_model=ResponseDetail)
+def get_response(id: str, response_id: str, db: Session = Depends(get_db)):
+    get_form_or_404(db, id)
+    response = (
+        db.query(Response)
+        .filter(Response.form_id == id, Response.id == response_id)
+        .first()
+    )
+    if not response:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Response with id '{response_id}' not found in form '{id}'",
+        )
+
+    duration = None
+    if response.started_at and response.submitted_at:
+        duration = max(
+            0.0, (response.submitted_at - response.started_at).total_seconds()
+        )
+    return ResponseDetail(
+        id=response.id,
+        form_id=response.form_id,
+        started_at=response.started_at,
+        submitted_at=response.submitted_at,
+        duration_seconds=duration,
+        answers=response.answers,
+    )
+
+
 @router.get("/stats", response_model=FormStats)
 def get_form_stats(id: str, db: Session = Depends(get_db)):
     form = get_form_or_404(db, id)
